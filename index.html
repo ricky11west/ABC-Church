@@ -40,6 +40,7 @@
     font-weight: 400;
     min-height: 100vh;
     overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
   }
 
   .wrap {
@@ -241,6 +242,7 @@
 
   /* ── DATA TABLE ── */
   .data-table { width: 100%; border-collapse: collapse; font-size: 12px; font-family: 'DM Mono', monospace; }
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .data-table th { text-align: left; padding: 8px 12px; color: var(--text-dim); font-size: 9px; letter-spacing: 2px; text-transform: uppercase; border-bottom: 2px solid var(--divider); font-weight: 500; }
   .data-table td { padding: 9px 12px; border-bottom: 1px solid var(--divider); color: var(--text-mid); }
   .data-table tr:last-child td { border-bottom: none; }
@@ -310,6 +312,60 @@
   footer .footer-note { font-size: 11px; color: var(--text-dim); font-family: 'DM Mono', monospace; }
 
   @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+  @media (max-width: 1100px) {
+    .wrap { padding: 0 24px 56px; }
+    .top-bar { margin: 0 -24px; padding: 14px 24px; height: auto; gap: 16px; flex-wrap: wrap; }
+    .exec-grid,
+    .chart-grid-2,
+    .insights-grid { grid-template-columns: 1fr; }
+    .page-title-row,
+    footer { align-items: flex-start; flex-direction: column; }
+    .page-title-row { gap: 16px; }
+    .waterfall-grid { grid-template-columns: repeat(2, 1fr); }
+    .header-right { flex-wrap: wrap; justify-content: flex-start; gap: 10px; }
+  }
+
+  @media (max-width: 720px) {
+    .wrap { padding: 0 16px 40px; }
+    .top-bar { margin: 0 -16px; padding: 14px 16px; align-items: flex-start; }
+    .logo-area { gap: 10px; }
+    .logo-mark svg { width: 32px; height: 32px; }
+    .logo-text h1 { font-size: 20px; letter-spacing: 2.2px; }
+    .logo-text span { font-size: 8px; letter-spacing: 2px; }
+    .header-right { width: 100%; flex-direction: column; align-items: flex-start; }
+    .report-period { font-size: 10px; line-height: 1.5; }
+    .page-title-row { padding: 24px 0 20px; margin-bottom: 24px; }
+    .page-title-row h2 { font-size: 34px; }
+    .page-title-row p { font-size: 12px; line-height: 1.5; }
+    .print-btn { width: 100%; justify-content: center; }
+    .exec-summary,
+    .chart-card,
+    .insight-card,
+    .cfo-note { padding: 20px; }
+    .exec-summary-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .exec-grid,
+    .insights-grid,
+    .kpi-row,
+    .chart-grid-2,
+    .waterfall-grid { grid-template-columns: 1fr; }
+    .kpi-row { gap: 12px; margin-bottom: 24px; }
+    .kpi-card { padding: 18px; }
+    .kpi-value { font-size: 34px; }
+    .section-label { align-items: flex-start; gap: 8px; line-height: 1.5; }
+    .section-label::after { margin-top: 7px; }
+    .card-title { font-size: 16px; }
+    .card-sub,
+    .insight-body,
+    .cfo-note-content p,
+    .exec-block p { font-size: 12px; line-height: 1.7; }
+    .insights-header { align-items: flex-start; flex-direction: column; gap: 8px; }
+    .insights-header h3 { font-size: 24px; }
+    .cfo-note { flex-direction: column; gap: 16px; }
+    .data-table { min-width: 860px; }
+    footer { gap: 8px; }
+    footer .footer-note { line-height: 1.6; }
+  }
 
   @media print { body { background:#fff; } .print-btn { display:none; } }
 </style>
@@ -483,16 +539,18 @@
     <div class="card-title">Monthly Detail Table</div>
     <div class="card-sub">All figures in USD · Recurring metrics reflect month-over-month MRR changes</div>
     <br>
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Month</th><th>Total Giving</th><th>Recurring MRR</th>
-          <th>New MRR</th><th>Expansion</th><th>Contraction</th>
-          <th>Lost MRR</th><th>Active Donors</th><th>Avg Gift</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody"></tbody>
-    </table>
+    <div class="table-scroll">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Month</th><th>Total Giving</th><th>Recurring MRR</th>
+            <th>New MRR</th><th>Expansion</th><th>Contraction</th>
+            <th>Lost MRR</th><th>Active Donors</th><th>Avg Gift</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- INSIGHTS -->
@@ -623,6 +681,16 @@ const RED   = '#E03A52';
 const AMBER = '#E8920A';
 const GRID  = 'rgba(0,38,58,0.06)';
 const TICK  = '#7A909F';
+const isMobile = window.matchMedia('(max-width: 720px)').matches;
+
+const legendOpts = (display = true) => ({
+  display,
+  position: isMobile ? 'bottom' : 'top',
+  labels: { color: NAVY, boxWidth: isMobile ? 10 : 12, font: { size: isMobile ? 10 : 11 } }
+});
+
+const chartPadding = top => ({ padding: { top: isMobile ? Math.max(10, top - 12) : top } });
+const showDataLabels = display => (isMobile ? false : display);
 
 Chart.defaults.color = TICK;
 Chart.defaults.borderColor = GRID;
@@ -650,7 +718,7 @@ new Chart(document.getElementById('totalDonations'), {
       {
         label:'Total Donations', data:totalGiving,
         backgroundColor:G2, borderColor:GREEN, borderWidth:1.5, borderRadius:6, order:2,
-        datalabels:{ display:true, anchor:'end', align:'end', offset:2,
+        datalabels:{ display:showDataLabels(true), anchor:'end', align:'end', offset:2,
           color:NAVY, font:{size:9,family:"'DM Mono',monospace",weight:'600'},
           formatter:v=>'$'+(v/1000).toFixed(0)+'k' }
       },
@@ -663,8 +731,8 @@ new Chart(document.getElementById('totalDonations'), {
     ]
   },
   options:{
-    responsive:true, layout:{padding:{top:24}},
-    plugins:{ legend:{labels:{color:NAVY,boxWidth:12,font:{size:11}}}, tooltip:tip },
+    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
+    plugins:{ legend:legendOpts(), tooltip:tip },
     scales:{ x:xScale(), y:yScaleMoney() }
   }
 });
@@ -680,14 +748,14 @@ new Chart(document.getElementById('avgGift'), {
       borderWidth:2.5, fill:true, tension:0.4,
       pointBackgroundColor:GREEN, pointRadius:5,
       datalabels:{
-        display:true, anchor:'top', align:'top', offset:4,
+        display:showDataLabels(true), anchor:'top', align:'top', offset:4,
         color:NAVY, font:{size:9,family:"'DM Mono',monospace",weight:'600'},
         formatter:v=>'$'+v
       }
     }]
   },
   options:{
-    responsive:true, layout:{padding:{top:24}},
+    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
     plugins:{legend:{display:false},tooltip:tip},
     scales:{ x:xScale(), y:{grid:{color:GRID},ticks:{font:{size:10},color:TICK,callback:v=>'$'+v}} }
   }
@@ -703,7 +771,7 @@ new Chart(document.getElementById('donorFlow'), {
         label:'New Donors', data:newDonors,
         backgroundColor:'rgba(0,200,90,0.22)', borderColor:GREEN, borderWidth:1, borderRadius:5,
         datalabels:{
-          display:true, anchor:'end', align:'end', offset:2,
+          display:showDataLabels(true), anchor:'end', align:'end', offset:2,
           color:'#009944', font:{size:9,family:"'DM Mono',monospace",weight:'600'},
           formatter:v=>'+'+v
         }
@@ -712,7 +780,7 @@ new Chart(document.getElementById('donorFlow'), {
         label:'Lost Donors', data:lostDonors,
         backgroundColor:'rgba(224,58,82,0.18)', borderColor:RED, borderWidth:1, borderRadius:5,
         datalabels:{
-          display:true, anchor:'end', align:'end', offset:2,
+          display:showDataLabels(true), anchor:'end', align:'end', offset:2,
           color:RED, font:{size:9,family:"'DM Mono',monospace",weight:'600'},
           formatter:v=>v
         }
@@ -720,8 +788,8 @@ new Chart(document.getElementById('donorFlow'), {
     ]
   },
   options:{
-    responsive:true, layout:{padding:{top:24}},
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:11}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(), y:yScaleCount() }
   }
 });
@@ -733,18 +801,18 @@ new Chart(document.getElementById('mrrWaterfall'), {
     labels:months,
     datasets:[
       { label:'New MRR',     data:newMRR,  backgroundColor:'rgba(0,200,90,0.32)',   borderColor:GREEN,borderWidth:1,borderRadius:3,stack:'s',
-        datalabels:{display:ctx=>Math.abs(ctx.dataset.data[ctx.dataIndex])>3000,anchor:'center',align:'center',color:'rgba(0,38,58,0.8)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(Math.abs(ctx.dataset.data[ctx.dataIndex])>3000),anchor:'center',align:'center',color:'rgba(0,38,58,0.8)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
       { label:'Expansion',   data:expMRR,  backgroundColor:'rgba(151,163,174,0.32)',borderColor:STEEL,borderWidth:1,borderRadius:3,stack:'s',
         datalabels:{display:false} },
       { label:'Contraction', data:conMRR,  backgroundColor:'rgba(232,146,10,0.28)', borderColor:AMBER,borderWidth:1,borderRadius:3,stack:'s',
         datalabels:{display:false} },
       { label:'Lost MRR',    data:lostMRR, backgroundColor:'rgba(224,58,82,0.25)',  borderColor:RED,  borderWidth:1,borderRadius:3,stack:'s',
-        datalabels:{display:ctx=>Math.abs(ctx.dataset.data[ctx.dataIndex])>3000,anchor:'center',align:'center',color:RED,font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'-$'+(Math.abs(v)/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(Math.abs(ctx.dataset.data[ctx.dataIndex])>3000),anchor:'center',align:'center',color:RED,font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'-$'+(Math.abs(v)/1000).toFixed(0)+'k'} },
     ]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:11}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
 });
@@ -756,15 +824,15 @@ new Chart(document.getElementById('giftFund'), {
     labels:months,
     datasets:[
       { label:'General Fund', data:generalFund,  backgroundColor:'rgba(0,200,90,0.28)',   borderRadius:3, stack:'f',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>5000,anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>5000),anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
       { label:'Missions',     data:missionsFund, backgroundColor:'rgba(0,38,58,0.22)',    borderRadius:3, stack:'f', datalabels:{display:false} },
       { label:'Building',     data:buildingFund, backgroundColor:'rgba(107,114,80,0.38)', borderRadius:3, stack:'f', datalabels:{display:false} },
       { label:'Community',    data:communityFnd, backgroundColor:'rgba(232,146,10,0.32)', borderRadius:3, stack:'f', datalabels:{display:false} },
     ]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:10}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
 });
@@ -776,14 +844,14 @@ new Chart(document.getElementById('internalExternal'), {
     labels:months,
     datasets:[
       { label:'Internal Tithes',   data:internalT, backgroundColor:'rgba(0,200,90,0.26)',  borderColor:GREEN,borderWidth:1,borderRadius:3,stack:'ie',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>5000,anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>5000),anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
       { label:'External Partners', data:externalP, backgroundColor:'rgba(232,146,10,0.26)', borderColor:AMBER,borderWidth:1,borderRadius:3,stack:'ie',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>5000,anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>5000),anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
     ]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:11}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
 });
@@ -795,14 +863,14 @@ new Chart(document.getElementById('recurringAmt'), {
     labels:months,
     datasets:[
       { label:'Recurring', data:recurAmt,   backgroundColor:'rgba(0,200,90,0.26)',   borderColor:GREEN,borderWidth:1,borderRadius:3,stack:'ra',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>5000,anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>5000),anchor:'center',align:'center',color:'rgba(0,38,58,0.75)',font:{size:9,family:"'DM Mono',monospace"},formatter:v=>'$'+(v/1000).toFixed(0)+'k'} },
       { label:'One-Time',  data:oneTimeAmt, backgroundColor:'rgba(151,163,174,0.28)',borderColor:STEEL,borderWidth:1,borderRadius:3,stack:'ra',
         datalabels:{display:false} },
     ]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:11}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
 });
@@ -814,14 +882,14 @@ new Chart(document.getElementById('recurringCount'), {
     labels:months,
     datasets:[
       { label:'Recurring', data:recurCnt,  backgroundColor:'rgba(0,200,90,0.26)',   borderColor:GREEN,borderWidth:1,borderRadius:3,stack:'rc',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>=8,anchor:'center',align:'center',color:'rgba(0,38,58,0.8)',font:{size:9,family:"'DM Mono',monospace",weight:'600'},formatter:v=>v} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>=8),anchor:'center',align:'center',color:'rgba(0,38,58,0.8)',font:{size:9,family:"'DM Mono',monospace",weight:'600'},formatter:v=>v} },
       { label:'One-Time',  data:oneTimeCnt,backgroundColor:'rgba(151,163,174,0.28)',borderColor:STEEL,borderWidth:1,borderRadius:3,stack:'rc',
-        datalabels:{display:ctx=>ctx.dataset.data[ctx.dataIndex]>=12,anchor:'center',align:'center',color:NAVY,font:{size:9,family:"'DM Mono',monospace",weight:'600'},formatter:v=>v} },
+        datalabels:{display:ctx=>showDataLabels(ctx.dataset.data[ctx.dataIndex]>=12),anchor:'center',align:'center',color:NAVY,font:{size:9,family:"'DM Mono',monospace",weight:'600'},formatter:v=>v} },
     ]
   },
   options:{
-    responsive:true,
-    plugins:{legend:{labels:{color:NAVY,boxWidth:10,font:{size:11}}},tooltip:tip},
+    responsive:true, maintainAspectRatio:false,
+    plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleCount(true) }
   }
 });
@@ -837,14 +905,14 @@ new Chart(document.getElementById('activeDonors'), {
       borderWidth:2.5, fill:true, tension:0.4,
       pointBackgroundColor:GREEN, pointRadius:5, pointHoverRadius:7,
       datalabels:{
-        display:true, anchor:'top', align:'top', offset:5,
+        display:showDataLabels(true), anchor:'top', align:'top', offset:5,
         color:NAVY, font:{size:10,family:"'DM Mono',monospace",weight:'700'},
         formatter:v=>v
       }
     }]
   },
   options:{
-    responsive:true, layout:{padding:{top:28}},
+    responsive:true, maintainAspectRatio:false, layout:chartPadding(28),
     plugins:{legend:{display:false},tooltip:tip},
     scales:{ x:xScale(), y:yScaleCount() }
   }
