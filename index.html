@@ -730,6 +730,12 @@ const legendOpts = (display = true) => ({
 
 const chartPadding = top => ({ padding: { top: isMobile ? Math.max(10, top - 12) : top } });
 const showDataLabels = display => (isMobile ? false : display);
+// Desktop: keep Chart.js default maintainAspectRatio:true so each canvas's intrinsic
+// height attribute drives the rendered height. Mobile: flip to false so our CSS
+// canvas heights (set in the @media (max-width:720px) block) take effect.
+const responsiveOpts = () => isMobile
+  ? { responsive: true, maintainAspectRatio: false }
+  : { responsive: true };
 
 Chart.defaults.color = TICK;
 Chart.defaults.borderColor = GRID;
@@ -770,7 +776,7 @@ new Chart(document.getElementById('totalDonations'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
+    ...responsiveOpts(), layout:chartPadding(24),
     plugins:{ legend:legendOpts(), tooltip:tip },
     scales:{ x:xScale(), y:yScaleMoney() }
   }
@@ -794,7 +800,7 @@ new Chart(document.getElementById('avgGift'), {
     }]
   },
   options:{
-    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
+    ...responsiveOpts(), layout:chartPadding(24),
     plugins:{legend:{display:false},tooltip:tip},
     scales:{ x:xScale(), y:{grid:{color:GRID},ticks:{font:{size:10},color:TICK,callback:v=>'$'+v}} }
   }
@@ -827,7 +833,7 @@ new Chart(document.getElementById('donorFlow'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false, layout:chartPadding(24),
+    ...responsiveOpts(), layout:chartPadding(24),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(), y:yScaleCount() }
   }
@@ -850,7 +856,7 @@ new Chart(document.getElementById('mrrWaterfall'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
+    ...responsiveOpts(),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
@@ -870,7 +876,7 @@ new Chart(document.getElementById('giftFund'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
+    ...responsiveOpts(),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
@@ -889,7 +895,7 @@ new Chart(document.getElementById('internalExternal'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
+    ...responsiveOpts(),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
@@ -908,7 +914,7 @@ new Chart(document.getElementById('recurringAmt'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
+    ...responsiveOpts(),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleMoney(true) }
   }
@@ -927,7 +933,7 @@ new Chart(document.getElementById('recurringCount'), {
     ]
   },
   options:{
-    responsive:true, maintainAspectRatio:false,
+    ...responsiveOpts(),
     plugins:{legend:legendOpts(),tooltip:tip},
     scales:{ x:xScale(true), y:yScaleCount(true) }
   }
@@ -951,7 +957,7 @@ new Chart(document.getElementById('activeDonors'), {
     }]
   },
   options:{
-    responsive:true, maintainAspectRatio:false, layout:chartPadding(28),
+    ...responsiveOpts(), layout:chartPadding(28),
     plugins:{legend:{display:false},tooltip:tip},
     scales:{ x:xScale(), y:yScaleCount() }
   }
